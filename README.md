@@ -21,32 +21,21 @@ struct Feedback: Codable {
 }
 
 struct FeedbackRequest: Request {
-    associatedType RequestType = FeedbackResponse.self
-    
-    let version = .version("v1")
-    let httpMethod = .get
+    var version: Satellite.Version = .version("v1")
+    var httpMethod: Satellite.Method = .post
     let path = "feedback"
-    let queryItems: [URLQueryItem]?
-    
-    // MARK: Data (HTTP body)
+    let queryItems: [URLQueryItem]? = nil
+
+    // MARK: Data (HTTP Body)
     let feedback: Feedback
-    
+
     init(feedback: Feedback) {
         self.feedback = feedback
     }
     
-    func urlRequest(for host: String, scheme: URLScheme) throws -> URLRequest {
-        guard let components = URLComponents(string: "\(scheme.rawValue)://\(host)/\(path)" else {
-            throw Satellite.NetworkError.urlIsInvalid
-        }
-        if let queryItems {
-            components.queryItems = queryItems
-        }
-        var urlRequest = URLRequest(url: components.url)
-        urlRequest.headers = ["Content-Type: "application/json"]
-        urlRequest.httpMethod = httpMethod.description
+    func urlRequest(for host: String, scheme: Satellite.URLScheme, apiKey: String) throws -> URLRequest {
+        var urlRequest = try defaultURLRequest(host: host, scheme: scheme, apiKey: apiKey)
         urlRequest.httpBody = try JSONEncoder().encode(feedback)
-        urlRequest.timeoutInterval = 5.0\
         return urlRequest
     }
 }
@@ -54,9 +43,8 @@ struct FeedbackRequest: Request {
 
 ### Sending the request and receiving the response (Combine/Publisher)
 ```swift
-let cancellable = Satellite
-    .send(request)
-    .responsePublisher()
+Satellite
+    .send(request, willReceiveOn: myAppResponse)
 ```
 
 ### Sending the request and waiting the response (Async await)
