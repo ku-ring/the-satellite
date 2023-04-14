@@ -18,6 +18,6 @@ jobs:
     - name: Building...
       run: |
           xcodebuild build -scheme Satellite -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=latest'
-    #- name: Testing...
-    #  run: |
-    #      xcodebuild clean test -scheme Satellite -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=latest'
+    - name: Testing...
+      run: |
+          xcodebuild clean test -scheme Satellite -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=latest'
