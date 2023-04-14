@@ -31,23 +31,23 @@
 import Foundation
 
 class Radio {
+    let host: String
+    let scheme: Satellite.URLScheme
     let apiKey: String
-    let domain: String
     
     var cancellables: Set<AnyCancellable> = []
     
-    init(apiKey: String, domain: String) {
+    init(host: String, scheme: Satellite.URLScheme = .https, apiKey: String = "") {
+        self.host = host
+        self.scheme = scheme
         self.apiKey = apiKey
-        self.domain = domain
     }
     
     func response<RequestType: Request & Respondable>(from request: RequestType) async throws -> RequestType.ResponseType {
         if apiKey.isEmpty {
             throw Satellite.NetworkError.apiKeyIsEmpty
         }
-        guard var urlRequest = request.urlRequest(domain) else {
-            throw Satellite.NetworkError.requestIsInvalid
-        }
+        var urlRequest = try request.urlRequest(for: host, scheme: scheme, apiKey: apiKey)
         urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -66,9 +66,7 @@ class Radio {
         if apiKey.isEmpty {
             throw Satellite.NetworkError.apiKeyIsEmpty
         }
-        guard var urlRequest = request.urlRequest(domain) else {
-            throw Satellite.NetworkError.requestIsInvalid
-        }
+        var urlRequest = try request.urlRequest(for: host, scheme: scheme, apiKey: apiKey)
         urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
         let (_, response) = try await URLSession.shared.data(for: urlRequest)
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -89,7 +87,7 @@ extension Radio {
             publisher.send(completion: .failure(Satellite.NetworkError.apiKeyIsEmpty))
             return
         }
-        guard var urlRequest = request.urlRequest(domain) else {
+        guard var urlRequest = try? request.urlRequest(for: host, scheme: scheme, apiKey: apiKey) else {
             publisher.send(completion: .failure(Satellite.NetworkError.requestIsInvalid))
             return
         }
@@ -112,5 +110,6 @@ extension Radio {
                 publisher.send(response)
             }
             .store(in: &cancellables)
+        return
     }
 }

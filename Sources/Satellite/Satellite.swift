@@ -25,13 +25,13 @@
 import Combine
 
 public class Satellite {
-    private static var radio = Radio(apiKey: "", domain: "")
+    private static var radio = Radio(host: "")
     
     public static var key: String { radio.apiKey }
     
     // MARK: Setting up
-    public static func setup(key: String, domain: String) {
-        Self.radio = Radio(apiKey: key, domain: domain)
+    public static func setup(host: String, scheme: Satellite.URLScheme = .https, apiKey: String = "") {
+        Self.radio = Radio(host: host, scheme: scheme, apiKey: apiKey)
     }
     
     public static func response<RequestType: Request & Respondable>(from request: RequestType) async throws -> RequestType.ResponseType {
