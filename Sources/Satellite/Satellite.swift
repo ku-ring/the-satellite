@@ -23,26 +23,112 @@
  */
 
 import Combine
+import Foundation
 
+/// The main class responsible for API communication.
 public class Satellite {
-    private static var radio = Radio(host: "")
+    /// URL Scheme such as `http` or `https`. See ``Satellite/Scheme``
+    public let scheme: Scheme
+    /// The host domain such as `apple.com` or `icloud.com`.
+    public let host: String
     
-    public static var key: String { radio.apiKey }
-    
-    // MARK: Setting up
-    public static func setup(host: String, scheme: Satellite.URLScheme = .https, apiKey: String = "") {
-        Self.radio = Radio(host: host, scheme: scheme, apiKey: apiKey)
+    /// The base URL that is a combination of ``scheme`` and ``host``.
+    /// `https://apple.com`
+    public var baseURL: String {
+        "\(scheme.rawValue)://\(host)"
     }
     
-    public static func response<RequestType: Request & Respondable>(from request: RequestType) async throws -> RequestType.ResponseType {
-        try await Self.radio.response(from: request)
+    /// Creates a new ``Satellite`` instance.
+    /// - Parameters:
+    ///    - host: The host domain such as `apple.com`
+    ///    - scheme: The URL scheme such as `http`. The default value is `https`
+    public init(host: String, scheme: Scheme = .https) {
+        self.host = host
+        self.scheme = scheme
     }
     
-    public static func send(_ request: Request & RequestableOnly) async throws {
-        try await Self.radio.send(request)
+    /// Creates a new URL request and returns the response asyncronously.
+    /// - Parameters:
+    ///    - uri: The URI. e.g., "search/user". If you need to add `/api` or `/v1`, please explict together.
+    ///    - httpMethod: ``Satellite/HTTPMethod`` object.
+    ///    - queryItems: (Optional) The array of `URLQueryItem` objects.
+    ///    - httpBody: (Optional) The object that conforms to `Encodable`.
+    /// - Returns: The object that is an expected response which conforms to `Decodable`.
+    public func response<ResponseType: Decodable>(
+        for uri: String,
+        httpMethod: Satellite.HTTPMethod,
+        queryItems: [URLQueryItem]? = nil,
+        httpBody: (any Encodable)? = nil
+    ) async throws -> ResponseType {
+        guard var components = URLComponents(string: "\(baseURL)/\(uri)") else {
+            throw Satellite.Error.urlIsInvalid
+        }
+        if let queryItems {
+            components.queryItems = queryItems
+        }
+        guard let url = components.url else {
+            throw Satellite.Error.urlIsInvalid
+        }
+        var urlRequest = URLRequest(url: url, timeoutInterval: 5.0)
+        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpMethod = httpMethod.rawValue
+        if let httpBody = httpBody {
+            urlRequest.httpBody = try JSONEncoder().encode(httpBody)
+        }
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw Satellite.Error.responseHasNoData
+        }
+        guard (200..<300) ~= httpResponse.statusCode else {
+            throw Satellite.Error.statusCode(httpResponse.statusCode)
+        }
+        guard let output = try? JSONDecoder().decode(ResponseType.self, from: data) else {
+            throw Satellite.Error.responseIsFailedDecoding
+        }
+        return output
     }
-    
-    public static func send<RequestType: Request & Respondable>(_ request: RequestType, willReceiveOn publisher: PassthroughSubject<RequestType.ResponseType, Error>) {
-        Self.radio.send(request, willReceiveOn: publisher)
+
+    /// Creates a new URL request and returns the publisher that sends response object as its value.
+    /// - Parameters:
+    ///    - uri: The URI. e.g., "search/user". If you need to add `/api` or `/v1`, please explict together.
+    ///    - httpMethod: ``Satellite/HTTPMethod`` object.
+    ///    - queryItems: (Optional) The array of `URLQueryItem` objects.
+    ///    - httpBody: (Optional) The object that conforms to `Encodable`.
+    /// - Returns: `AnyPublisher` that publishes the response which conforms to `Decodable`.
+    public func responsePublisher<ResponseType: Decodable>(
+        for uri: String,
+        httpMethod: HTTPMethod,
+        queryItems: [URLQueryItem]? = nil,
+        httpBody: (any Encodable)? = nil
+    ) throws -> AnyPublisher<ResponseType, Swift.Error> {
+        guard var components = URLComponents(string: "\(baseURL)/\(uri)") else {
+            throw Satellite.Error.urlIsInvalid
+        }
+        if let queryItems {
+            components.queryItems = queryItems
+        }
+        guard let url = components.url else {
+            throw Satellite.Error.urlIsInvalid
+        }
+        var urlRequest = URLRequest(url: url, timeoutInterval: 5.0)
+        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.httpMethod = httpMethod.rawValue
+        if let httpBody = httpBody {
+            urlRequest.httpBody = try JSONEncoder().encode(httpBody)
+        }
+        let publisher = URLSession.shared
+            .dataTaskPublisher(for: urlRequest)
+            .tryMap { (data, response) in
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw Satellite.Error.requestIsFailed
+                }
+                guard (200..<300) ~= httpResponse.statusCode else {
+                    throw Satellite.Error.statusCode(httpResponse.statusCode)
+                }
+                return data
+            }
+            .decode(type: ResponseType.self, decoder: JSONDecoder())
+            .eraseToAnyPublisher()
+        return publisher
     }
 }

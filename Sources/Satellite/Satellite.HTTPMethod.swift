@@ -1,5 +1,5 @@
 //
-//  Satellite.Error.swift
+//  Satellite.HTTPMethod.swift
 //  
 //
 //  Created by Jaesung Lee on 2023/04/14.
@@ -27,29 +27,14 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
  */
- 
 import Foundation
 
 extension Satellite {
-    /// The enumeration that defines error cases used in ``Satellite``
-    public enum Error: Swift.Error, CustomStringConvertible {
-        case urlIsInvalid
-        case requestIsInvalid
-        case requestIsFailed
-        case responseHasNoData
-        case responseIsFailedDecoding
-        case statusCode(_ statusCode: Int)
-        
-        /// The description of the error
-        public var description: String {
-            switch self {
-            case .urlIsInvalid: return "URL is invalid"
-            case .requestIsInvalid: return "URL request is invalid"
-            case .requestIsFailed: return "Request is failed"
-            case .responseHasNoData: return "Response has no data"
-            case .responseIsFailedDecoding: return "Response is failed decoding"
-            case .statusCode(let code): return "Status code: \(code)"
-            }
-        }
+    /// The defined HTTP Methods such as `GET`, `POST`, etc.
+    public enum HTTPMethod: String {
+        case post = "POST"
+        case get = "GET"
+        case delete = "DELETE"
+        case put = "PUT"
     }
 }
