@@ -49,32 +49,26 @@ public class Satellite {
     
     /// Creates a new URL request and returns the response asyncronously.
     /// - Parameters:
-    ///    - uri: The URI. e.g., "search/user". If you need to add `/api` or `/v1`, please explict together.
+    ///    - path: The path. e.g., "search/user". If you need to add `/api` or `/v1`, please explict together.
     ///    - httpMethod: ``Satellite/HTTPMethod`` object.
     ///    - queryItems: (Optional) The array of `URLQueryItem` objects.
+    ///    - httpHeaders: (Optional) The HTTP headers. The default is "application/json" for "Content-Type", a header field.
     ///    - httpBody: (Optional) The object that conforms to `Encodable`.
     /// - Returns: The object that is an expected response which conforms to `Decodable`.
     public func response<ResponseType: Decodable>(
-        for uri: String,
+        for path: String,
         httpMethod: Satellite.HTTPMethod,
         queryItems: [URLQueryItem]? = nil,
+        httpHeaders: [String: String]? = ["Content-Type": "application/json"],
         httpBody: (any Encodable)? = nil
     ) async throws -> ResponseType {
-        guard var components = URLComponents(string: "\(baseURL)/\(uri)") else {
-            throw Satellite.Error.urlIsInvalid
-        }
-        if let queryItems {
-            components.queryItems = queryItems
-        }
-        guard let url = components.url else {
-            throw Satellite.Error.urlIsInvalid
-        }
-        var urlRequest = URLRequest(url: url, timeoutInterval: 5.0)
-        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.httpMethod = httpMethod.rawValue
-        if let httpBody = httpBody {
-            urlRequest.httpBody = try JSONEncoder().encode(httpBody)
-        }
+        let urlRequest = try  createRequest(
+            for: path, 
+            httpMethod: httpMethod, 
+            queryItems: queryItems, 
+            httpHeaders: httpHeaders, 
+            httpBody: httpBody
+        )
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw Satellite.Error.responseHasNoData
@@ -90,32 +84,26 @@ public class Satellite {
 
     /// Creates a new URL request and returns the publisher that sends response object as its value.
     /// - Parameters:
-    ///    - uri: The URI. e.g., "search/user". If you need to add `/api` or `/v1`, please explict together.
+    ///    - path: The path. e.g., "search/user". If you need to add `/api` or `/v1`, please explict together.
     ///    - httpMethod: ``Satellite/HTTPMethod`` object.
     ///    - queryItems: (Optional) The array of `URLQueryItem` objects.
+    ///    - httpHeaders: (Optional) The HTTP headers. The default is "application/json" for "Content-Type", a header field.
     ///    - httpBody: (Optional) The object that conforms to `Encodable`.
     /// - Returns: `AnyPublisher` that publishes the response which conforms to `Decodable`.
     public func responsePublisher<ResponseType: Decodable>(
-        for uri: String,
+        for path: String,
         httpMethod: HTTPMethod,
         queryItems: [URLQueryItem]? = nil,
+        httpHeaders: [String: String]? = ["Content-Type": "application/json"],
         httpBody: (any Encodable)? = nil
     ) throws -> AnyPublisher<ResponseType, Swift.Error> {
-        guard var components = URLComponents(string: "\(baseURL)/\(uri)") else {
-            throw Satellite.Error.urlIsInvalid
-        }
-        if let queryItems {
-            components.queryItems = queryItems
-        }
-        guard let url = components.url else {
-            throw Satellite.Error.urlIsInvalid
-        }
-        var urlRequest = URLRequest(url: url, timeoutInterval: 5.0)
-        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.httpMethod = httpMethod.rawValue
-        if let httpBody = httpBody {
-            urlRequest.httpBody = try JSONEncoder().encode(httpBody)
-        }
+        let urlRequest = try  createRequest(
+            for: path, 
+            httpMethod: httpMethod, 
+            queryItems: queryItems, 
+            httpHeaders: httpHeaders, 
+            httpBody: httpBody
+        )
         let publisher = URLSession.shared
             .dataTaskPublisher(for: urlRequest)
             .tryMap { (data, response) in
@@ -130,5 +118,34 @@ public class Satellite {
             .decode(type: ResponseType.self, decoder: JSONDecoder())
             .eraseToAnyPublisher()
         return publisher
+    }
+
+    private func createRequest(
+        for path: String,
+        httpMethod: HTTPMethod,
+        queryItems: [URLQueryItem]?,
+        httpHeaders: [String: String]?,
+        httpBody: (any Encodable)?
+    ) throws -> URLRequest {
+        guard var components = URLComponents(string: "\(baseURL)/\(path)") else {
+            throw Satellite.Error.urlIsInvalid
+        }
+        if let queryItems {
+            components.queryItems = queryItems
+        }
+        guard let url = components.url else {
+            throw Satellite.Error.urlIsInvalid
+        }
+        var urlRequest = URLRequest(url: url, timeoutInterval: 5.0)
+        urlRequest.httpMethod = httpMethod.rawValue
+        if let httpHeaders {
+            httpHeaders.forEach { (key, value) in
+                urlRequest.addValue(value, forHTTPHeaderField: key)
+            }
+        }
+        if let httpBody {
+            urlRequest.httpBody = try JSONEncoder().encode(httpBody)
+        }
+        return urlRequest
     }
 }

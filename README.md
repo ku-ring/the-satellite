@@ -40,7 +40,7 @@ cancellable  = statellite
     )
 ```
 
-> **INFORMATION** For the more information on URLSession data task publisher, pleas see this [link](https://developer.apple.com/documentation/foundation/urlsession/processing_url_session_data_task_results_with_combine)
+> **INFORMATION** For the more information on URLSession data task publisher, please see this [link](https://developer.apple.com/documentation/foundation/urlsession/processing_url_session_data_task_results_with_combine)
 
 ### Sending the request and waiting the response (Async await)
 ```swift
