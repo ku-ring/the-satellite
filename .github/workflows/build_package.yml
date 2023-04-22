@@ -1,0 +1,20 @@
+name: The Satellite Swift Package Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build package
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        swift-version: "5.7.0"
+    - name: Building...
+      run: |
+          xcodebuild build -scheme Satellite -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=latest'

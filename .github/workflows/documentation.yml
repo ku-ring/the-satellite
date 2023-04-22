@@ -1,0 +1,34 @@
+name: The Satellite Documentation
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    environment:
+      # Must be set to this for deploying to GitHub Pages
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v3
+      - name: Build DocC
+        run: |
+          xcodebuild docbuild -scheme Satellite \
+            -derivedDataPath /tmp/docbuild \
+            -destination 'generic/platform=iOS';
+          $(xcrun --find docc) process-archive \
+            transform-for-static-hosting /tmp/docbuild/Build/Products/Debug-iphoneos/Satellite.doccarchive \
+            --hosting-base-path TheSatellite \
+            --output-path docs;
+          echo "<script>window.location.href += \"/documentation/Satellite\"</script>" > docs/index.html;
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Upload only docs directory
+          path: 'docs'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1

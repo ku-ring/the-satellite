@@ -1,0 +1,21 @@
+name: The Satellite Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Run unit tests in SatelliteTests
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        swift-version: "5.7.0"
+    - name: Testing...
+      run: |
+          xcodebuild clean test -scheme Satellite -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=latest'
