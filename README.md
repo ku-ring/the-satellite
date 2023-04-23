@@ -5,21 +5,21 @@ The Satellite is an API communication module written in Swift.
 # Contribution
 
 I welcome and appreciate contributions from the community. If you find a bug, have a feature request, or want to contribute code, please submit an issue or a pull request on our GitHub repository freely.
-Please see [💪 How to Contribute in Discussion](https://github.com/kuring/the-satellite/discussions/1) tab.
+Please see [💪 How to Contribute in Discussion](https://github.com/ku-ring/the-satellite/discussions/1) tab.
 
 > **Important**
 >
 > When you contribute code via pull request, please add the unit tests for your new functions.
 
 # License
-**The Satellite** is released under the MIT license. See [LICENSE](https://github.com/kuring/the-satellite/blob/main/LICENSE) for details.
+**The Satellite** is released under the MIT license. See [LICENSE](https://github.com/ku-ring/the-satellite/blob/main/LICENSE) for details.
 
 # Installation
 
 ## Installation guide for your Swift Package
 1. In your `Package.swift` Swift Package Manager manifest, add the following dependency to your dependencies argument:
     ```swift
-    .package(url: "https://github.com/kuring/the-satellite.git, .branch("main")),
+    .package(url: "https://github.com/ku-ring/the-satellite.git, .branch("main")),
     ```
 2. Add the dependency to any targets you've declared in your manifest:
     ```swift
@@ -30,7 +30,7 @@ Please see [💪 How to Contribute in Discussion](https://github.com/kuring/the-
 To use the Satellite in your project, follow these steps:
 
 1. In Xcode, select **File** > **Swift Packages** > **Add Package Dependency**.
-2. In the search bar, paste the the Satellite URL: https://github.com/kuring/the-satellite
+2. In the search bar, paste the the Satellite URL: https://github.com/ku-ring/the-satellite
 3. Select the branch as **main** to install.
 4. Click **Next**, and then click **Finish**.
 
