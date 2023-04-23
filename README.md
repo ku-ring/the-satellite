@@ -5,7 +5,7 @@ The Satellite is an API communication module written in Swift.
 # Contribution
 
 I welcome and appreciate contributions from the community. If you find a bug, have a feature request, or want to contribute code, please submit an issue or a pull request on our GitHub repository freely.
-Please see [💪 How to Contribute in Discussion](https://github.com/ku-ring/the-satellite/discussions/1) tab.
+Please see [💪 How to Contribute in Discussion](https://github.com/ku-ring/the-satellite/discussions/2) tab.
 
 > **Important**
 >
@@ -45,6 +45,10 @@ import Satellite
 ## v1: Sputnik
 
 "Version **Sputnik**" is the very first version of **the Satellite**, providing very basic public interfaces for API communication in Swift. It offers two main interfaces, one for *Swift concurrency* and another for *Combine*. Let's see how to use them.
+
+> **See Also**
+>
+> Here is the [class diagram for the Satellte: Sputnik](https://user-images.githubusercontent.com/53814741/232882550-3c0a5efd-0742-4f3b-bbeb-0598012d07d8.png)
 
 ### 1. Creating the new Satellite instance with your host domain
 ```swift
