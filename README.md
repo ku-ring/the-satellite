@@ -1,6 +1,6 @@
 ![Frame 7@3x](https://user-images.githubusercontent.com/53814741/231978905-e0540fc8-1ea9-4beb-b088-357778092e66.png)
 
-The Satellite is an API communication module written in Swift.
+The Satellite is an API communication module only for iOS written in Swift.
 
 # Contribution
 
