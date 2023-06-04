@@ -28,6 +28,20 @@ final class SatelliteTests: XCTestCase {
             XCTAssertFalse($0.text.isEmpty)
         }
     }
+    
+    func test_globalPrintingSystem() async throws {
+        let satellite = Satellite(host: "cat-fact.herokuapp.com")
+        satellite._startGPS()
+        let _: [CatFact] = try await satellite.response(
+            for: "facts/random",
+            httpMethod: .get,
+            queryItems: [
+                URLQueryItem(name: "animal_type", value: "cat"),
+                URLQueryItem(name: "amount", value: "2")
+            ]
+        )
+        XCTAssertFalse(satellite._gpsLogs.isEmpty)
+    }
 }
 
 struct CatFact: Codable {

@@ -32,6 +32,9 @@ public class Satellite {
     /// The host domain such as `apple.com` or `icloud.com`.
     public let host: String
     
+    var _isGPSEnabled: Bool = false
+    var _gpsLogs: [String] = []
+    
     /// The base URL that is a combination of ``scheme`` and ``host``.
     /// `https://apple.com`
     public var baseURL: String {
@@ -70,14 +73,21 @@ public class Satellite {
             httpBody: httpBody
         )
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        showGPT(String(data: data, encoding: .utf8) ?? "Unknown data")
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw Satellite.Error.responseHasNoData
+            let error = Satellite.Error.responseHasNoData
+            showGPT(error.description)
+            throw error
         }
         guard (200..<300) ~= httpResponse.statusCode else {
-            throw Satellite.Error.statusCode(httpResponse.statusCode)
+            let error = Satellite.Error.statusCode(httpResponse.statusCode)
+            showGPT(error.description)
+            throw error
         }
         guard let output = try? JSONDecoder().decode(ResponseType.self, from: data) else {
-            throw Satellite.Error.responseIsFailedDecoding
+            let error = Satellite.Error.responseIsFailedDecoding
+            showGPT(error.description)
+            throw error
         }
         return output
     }
@@ -106,12 +116,17 @@ public class Satellite {
         )
         let publisher = URLSession.shared
             .dataTaskPublisher(for: urlRequest)
-            .tryMap { (data, response) in
+            .tryMap { [weak self] (data, response) in
+                self?.showGPT(String(data: data, encoding: .utf8) ?? "Unknown data")
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    throw Satellite.Error.requestIsFailed
+                    let error = Satellite.Error.requestIsFailed
+                    self?.showGPT(error.description)
+                    throw error
                 }
                 guard (200..<300) ~= httpResponse.statusCode else {
-                    throw Satellite.Error.statusCode(httpResponse.statusCode)
+                    let error = Satellite.Error.statusCode(httpResponse.statusCode)
+                    self?.showGPT(error.description)
+                    throw error
                 }
                 return data
             }
@@ -127,14 +142,19 @@ public class Satellite {
         httpHeaders: [String: String]?,
         httpBody: (any Encodable)?
     ) throws -> URLRequest {
+        showGPT("\(baseURL)/\(path)")
         guard var components = URLComponents(string: "\(baseURL)/\(path)") else {
-            throw Satellite.Error.urlIsInvalid
+            let error = Satellite.Error.urlIsInvalid
+            showGPT(error.description)
+            throw error
         }
         if let queryItems {
             components.queryItems = queryItems
         }
         guard let url = components.url else {
-            throw Satellite.Error.urlIsInvalid
+            let error = Satellite.Error.urlIsInvalid
+            showGPT(error.description)
+            throw error
         }
         var urlRequest = URLRequest(url: url, timeoutInterval: 5.0)
         urlRequest.httpMethod = httpMethod.rawValue
@@ -146,6 +166,7 @@ public class Satellite {
         if let httpBody {
             urlRequest.httpBody = try JSONEncoder().encode(httpBody)
         }
+        showGPT(urlRequest.description)
         return urlRequest
     }
 }
